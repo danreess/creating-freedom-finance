@@ -1,7 +1,10 @@
 {
-  "name": "finance-app",
+  "name": "creating-freedom-finance",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,13 +12,27 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@types/papaparse": "^5.5.2",
+    "better-sqlite3": "^12.11.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
     "next": "16.2.9",
+    "next-pwa": "^5.6.0",
+    "nodemailer": "^9.0.1",
+    "otpauth": "^9.5.1",
+    "papaparse": "^5.5.4",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
