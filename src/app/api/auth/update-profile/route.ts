@@ -25,6 +25,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Name is too long" }, { status: 400 });
   }
 
-  updateName(user.id, trimmed);
+  await updateName(user.id, trimmed);
   return NextResponse.json({ ok: true, name: trimmed });
 }

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email and code are required" }, { status: 400 });
   }
 
-  const result = checkCode(email, code);
+  const result = await checkCode(email, code);
   if (result === null) {
     return NextResponse.json(
       { error: "Code has expired or too many attempts — please request a new one" },
@@ -25,16 +25,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect code — please try again" }, { status: 401 });
   }
 
-  const pending = consumePending(email);
+  const pending = await consumePending(email);
   if (!pending) {
     return NextResponse.json({ error: "Verification expired — please start again" }, { status: 410 });
   }
 
-  if (getUserByEmail(email)) {
+  if (await getUserByEmail(email)) {
     return NextResponse.json({ error: "This email is already registered" }, { status: 409 });
   }
 
-  insertUserHashed({
+  await insertUserHashed({
     email: pending.email,
     name: pending.name,
     passwordHash: pending.passwordHash,

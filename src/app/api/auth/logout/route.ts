@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth, authError } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { bumpSessionVersion } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth(req);
     // Bump version — any token signed with the old version is now invalid
-    bumpSessionVersion(user.id);
+    await bumpSessionVersion(user.id);
   } catch {
     // Still clear the cookie even if the session was already invalid
   }

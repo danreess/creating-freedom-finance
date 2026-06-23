@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, authError } from "@/lib/auth";
-import { verifyPassword, db } from "@/lib/users";
+import { verifyPassword, deleteUser } from "@/lib/users";
 
 export async function DELETE(req: NextRequest) {
   let user;
@@ -25,8 +25,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
-  db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
-  db.prepare("DELETE FROM login_attempts WHERE email = lower(?)").run(user.email);
+  await deleteUser(user.id, user.email);
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set("__session", "", {

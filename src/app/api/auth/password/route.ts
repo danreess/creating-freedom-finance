@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, authError } from "@/lib/auth";
-import { verifyPassword, updatePassword } from "@/lib/users";
+import { verifyPassword, updatePassword, getUserById } from "@/lib/users";
 import { signSession } from "@/lib/session";
-import { getUserById } from "@/lib/users";
 
 export async function POST(req: NextRequest) {
   let user;
@@ -33,7 +32,8 @@ export async function POST(req: NextRequest) {
   await updatePassword(user.id, newPassword);
 
   // Issue a fresh token for the current session so the user stays logged in
-  const updated = getUserById(user.id)!;
+  const updated = await getUserById(user.id);
+  if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
   const newToken = await signSession(updated.id, updated.sessionVersion);
 
   const res = NextResponse.json({ ok: true });

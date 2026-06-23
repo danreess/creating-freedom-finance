@@ -62,10 +62,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Don't reveal whether this email is already registered — just silently succeed.
-  // A real attacker can't distinguish "email exists" from "email doesn't exist".
-  if (getUserByEmail(email)) {
-    // Return ok=true but don't actually send anything or create pending entry.
-    // The user will try to verify a code that doesn't exist and get "expired" — benign.
+  if (await getUserByEmail(email)) {
     return NextResponse.json({ ok: true });
   }
 

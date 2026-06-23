@@ -54,25 +54,25 @@ export async function POST(req: NextRequest) {
   }
 
   // Check per-account lockout BEFORE doing any DB work
-  if (isAccountLocked(email)) {
+  if (await isAccountLocked(email)) {
     return NextResponse.json(
       { error: "Account temporarily locked — too many failed attempts. Try again in 30 minutes." },
       { status: 429 }
     );
   }
 
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
 
   // Always run verifyPassword even if user not found — prevents timing-based enumeration
   const hashToCheck = user?.passwordHash ?? DUMMY_HASH;
   const valid = await verifyPassword(password, hashToCheck);
 
   if (!user || !valid) {
-    if (user) recordFailedLogin(email); // Only count against real accounts
+    if (user) await recordFailedLogin(email);
     return NextResponse.json({ error: "Incorrect email or password" }, { status: 401 });
   }
 
-  clearFailedLogins(email);
+  await clearFailedLogins(email);
   ipAttempts.delete(ip);
 
   // If 2FA is enabled, issue a short-lived temp token instead of a full session

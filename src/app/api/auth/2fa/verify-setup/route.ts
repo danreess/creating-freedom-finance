@@ -30,12 +30,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid code — check your authenticator app and try again" }, { status: 401 });
   }
 
-  const plainCodes   = generateBackupCodes();
-  const hashedCodes  = await hashBackupCodes(plainCodes);
-  enableTotp(user.id, hashedCodes);
+  const plainCodes  = generateBackupCodes();
+  const hashedCodes = await hashBackupCodes(plainCodes);
+  await enableTotp(user.id, hashedCodes);
 
   // Re-issue session with new version (enableTotp bumps it)
-  const updated = getUserById(user.id)!;
+  const updated = await getUserById(user.id);
+  if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
   const token = await signSession(updated.id, updated.sessionVersion);
 
   const res = NextResponse.json({ ok: true, backupCodes: plainCodes });

@@ -25,10 +25,10 @@ export async function requireAuth(req: NextRequest): Promise<User> {
   const data = getSessionData(token);
   if (!data) throw new AuthError("Invalid session", 401);
 
-  const user = getUserById(data.userId);
+  const user = await getUserById(data.userId);
   if (!user) throw new AuthError("User not found", 404);
 
-  const currentVersion = getSessionVersion(data.userId);
+  const currentVersion = await getSessionVersion(data.userId);
   if (data.sessionVersion !== currentVersion) {
     throw new AuthError("Session invalidated — please sign in again", 401);
   }

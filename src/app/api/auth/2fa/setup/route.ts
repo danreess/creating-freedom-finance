@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   }
 
   const secret = generateTotpSecret();
-  saveTotpSecret(user.id, secret);
+  await saveTotpSecret(user.id, secret);
 
   const uri = getTotpUri(user.email, secret);
   const qrDataUrl = await QRCode.toDataURL(uri, {

@@ -35,10 +35,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid authenticator code" }, { status: 401 });
   }
 
-  disableTotp(user.id);
+  await disableTotp(user.id);
 
   // Re-issue session with new version (disableTotp bumps it)
-  const updated = getUserById(user.id)!;
+  const updated = await getUserById(user.id);
+  if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
   const token = await signSession(updated.id, updated.sessionVersion);
 
   const res = NextResponse.json({ ok: true });

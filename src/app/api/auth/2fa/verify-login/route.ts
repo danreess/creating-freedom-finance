@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = getUserById(userId);
+  const user = await getUserById(userId);
   if (!user || !user.totpEnabled || !user.totpSecret) {
     return NextResponse.json({ error: "2FA not configured" }, { status: 400 });
   }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   const hashed = user.backupCodes ? (JSON.parse(user.backupCodes) as string[]) : [];
   const { valid, remaining } = await consumeBackupCode(normalizedCode, hashed);
   if (valid) {
-    updateBackupCodes(user.id, remaining);
+    await updateBackupCodes(user.id, remaining);
     const token = await signSession(user.id, user.sessionVersion);
     const res = NextResponse.json({
       ok: true,
