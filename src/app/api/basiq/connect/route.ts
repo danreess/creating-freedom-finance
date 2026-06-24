@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, authError } from "@/lib/auth";
 import { getBasiqToken, createBasiqUser, createBasiqAuthLink } from "@/lib/basiq";
 
 export async function POST(request: NextRequest) {
+  try { await requireAuth(request); } catch (err) { return authError(err); }
+
   const apiKey = process.env.BASIQ_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
       mobile,
       email,
       callbackUrl || `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/basiq/callback`,
-      institutionId || undefined  // undefined = Basiq shows its own picker for all 136+ banks
+      institutionId || undefined
     );
 
     return NextResponse.json({ authLink, userId });

@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, authError } from "@/lib/auth";
 
 const TOKEN_URL = "https://api.sharesight.com/oauth2/token";
 const BASE = "https://api.sharesight.com/api/v2";
@@ -24,7 +25,9 @@ async function getAccessToken(): Promise<string> {
   return data.access_token as string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  try { await requireAuth(req); } catch (err) { return authError(err); }
+
   try {
     const token = await getAccessToken();
 
