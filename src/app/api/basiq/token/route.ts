@@ -6,9 +6,7 @@ export async function GET(req: NextRequest) {
   try { await requireAuth(req); } catch (err) { return authError(err); }
 
   const apiKey = process.env.BASIQ_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "Basiq API key not configured" }, { status: 503 });
-  }
+  if (!apiKey) return NextResponse.json({ error: "Basiq not configured on this server" }, { status: 503 });
 
   try {
     const token = await getBasiqToken(apiKey);

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, authError } from "@/lib/auth";
+import { getConnection } from "@/lib/connections";
 
 const TOKEN_URL = "https://api.sharesight.com/oauth2/token";
 const BASE = "https://api.sharesight.com/api/v2";
 
-async function getAccessToken(): Promise<string> {
-  const clientId = process.env.SHARESIGHT_CLIENT_ID;
-  const clientSecret = process.env.SHARESIGHT_CLIENT_SECRET;
-  const refreshToken = process.env.SHARESIGHT_REFRESH_TOKEN;
-  if (!clientId || !clientSecret || !refreshToken) throw new Error("not configured");
-
+async function getAccessToken(clientId: string, clientSecret: string, refreshToken: string): Promise<string> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -26,10 +22,16 @@ async function getAccessToken(): Promise<string> {
 }
 
 export async function GET(req: NextRequest) {
-  try { await requireAuth(req); } catch (err) { return authError(err); }
+  let user;
+  try { user = await requireAuth(req); } catch (err) { return authError(err); }
+
+  const creds = await getConnection(user.id, "sharesight");
+  if (!creds) {
+    return NextResponse.json({ error: "Sharesight not connected — add your credentials in Account → Connections" }, { status: 503 });
+  }
 
   try {
-    const token = await getAccessToken();
+    const token = await getAccessToken(creds.clientId, creds.clientSecret, creds.refreshToken);
 
     const portRes = await fetch(`${BASE}/portfolios.json`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
@@ -53,9 +55,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message === "not configured") {
-      return NextResponse.json({ error: "Sharesight not configured" }, { status: 503 });
-    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

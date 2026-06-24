@@ -587,33 +587,122 @@ function SecurityTab({ user, onTotpChange }: { user: UserProfile; onTotpChange: 
 }
 
 // ── Connections tab ────────────────────────────────────────────────────────────
-function ConnectionsTab() {
-  const [conns, setConns] = useState<Connections | null>(null);
+function CoinSpotForm({ onSaved }: { onSaved: () => void }) {
+  const [apiKey, setApiKey] = useState("");
+  const [secret, setSecret] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/connections").then((r) => r.json()).then(setConns).catch(() => {});
-  }, []);
-
-  const SETUP_LINKS: Record<string, string> = {
-    coinspot:   "https://www.coinspot.com.au/api",
-    basiq:      "https://dashboard.basiq.io",
-    sharesight: "https://api.sharesight.com",
-    email:      "https://myaccount.google.com/apppasswords",
-  };
-
-  const ICONS: Record<string, string> = {
-    coinspot: "₿", basiq: "🏦", sharesight: "📈", email: "✉️",
-  };
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true); setError("");
+    const res = await fetch("/api/connections/coinspot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey, secret }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) { setError(data.error || "Failed to save"); return; }
+    onSaved();
+  }
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-[#1e2d4a] bg-[#0f1a2e] p-6 space-y-4">
-        <div>
-          <h3 className="text-white font-semibold">Connected Services</h3>
-          <p className="text-slate-500 text-xs mt-1">
-            API keys are stored in <code className="text-emerald-400">.env.local</code> — they never leave your server
-          </p>
-        </div>
+    <form onSubmit={handleSave} className="mt-3 space-y-3 border-t border-[#1e2d4a] pt-3">
+      <p className="text-xs text-slate-400">
+        Get your API key from{" "}
+        <a href="https://www.coinspot.com.au/api" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+          coinspot.com.au/api
+        </a>{" "}— use a <strong>read-only</strong> key.
+      </p>
+      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" required
+        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+      <input value={secret} onChange={e => setSecret(e.target.value)} placeholder="Secret" required type="password"
+        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <button type="submit" disabled={saving}
+        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors">
+        {saving ? "Saving…" : "Save & Connect"}
+      </button>
+    </form>
+  );
+}
+
+function SharesightForm({ onSaved }: { onSaved: () => void }) {
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [refreshToken, setRefreshToken] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true); setError("");
+    const res = await fetch("/api/connections/sharesight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, clientSecret, refreshToken }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) { setError(data.error || "Failed to save"); return; }
+    onSaved();
+  }
+
+  return (
+    <form onSubmit={handleSave} className="mt-3 space-y-3 border-t border-[#1e2d4a] pt-3">
+      <p className="text-xs text-slate-400">
+        Register an OAuth app at{" "}
+        <a href="https://portfolio.sharesight.com/api_partners/new" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+          Sharesight API Partners
+        </a>{" "}to get your client ID, secret, and refresh token.
+      </p>
+      <input value={clientId} onChange={e => setClientId(e.target.value)} placeholder="Client ID" required
+        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+      <input value={clientSecret} onChange={e => setClientSecret(e.target.value)} placeholder="Client Secret" required type="password"
+        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+      <input value={refreshToken} onChange={e => setRefreshToken(e.target.value)} placeholder="Refresh Token" required type="password"
+        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+      {error && <p className="text-xs text-red-400">{error}</p>}
+      <button type="submit" disabled={saving}
+        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors">
+        {saving ? "Saving…" : "Save & Connect"}
+      </button>
+    </form>
+  );
+}
+
+function ConnectionsTab() {
+  const [conns, setConns] = useState<Connections | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+
+  function reload() {
+    fetch("/api/connections").then(r => r.json()).then(setConns).catch(() => {});
+  }
+
+  useEffect(() => { reload(); }, []);
+
+  async function handleDisconnect(service: string) {
+    setDisconnecting(service);
+    await fetch(`/api/connections/${service}`, { method: "DELETE" });
+    setDisconnecting(null);
+    reload();
+  }
+
+  async function handleConnectBanks() {
+    const res = await fetch("/api/basiq/connect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const data = await res.json();
+    if (data.authLink) window.location.href = data.authLink;
+  }
+
+  const ICONS: Record<string, string> = { coinspot: "₿", basiq: "🏦", sharesight: "📈", email: "✉️" };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-[#1e2d4a] bg-[#0f1a2e] p-5">
+        <h3 className="text-white font-semibold mb-1">Your Connected Services</h3>
+        <p className="text-slate-500 text-xs mb-4">Your credentials are encrypted and stored privately — other users cannot see them.</p>
 
         {!conns ? (
           <div className="flex items-center gap-2 text-slate-500 text-sm py-4">
@@ -622,43 +711,138 @@ function ConnectionsTab() {
           </div>
         ) : (
           <div className="space-y-3">
-            {(Object.entries(conns) as [string, Connections[keyof Connections]][]).map(([key, svc]) => (
-              <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-[#0a1222] border border-[#1e2d4a]">
+            {/* CoinSpot */}
+            <div className="rounded-xl bg-[#0a1222] border border-[#1e2d4a] p-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#0f1a2e] border border-[#1e2d4a] flex items-center justify-center text-lg">
-                    {ICONS[key]}
-                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-[#0f1a2e] border border-[#1e2d4a] flex items-center justify-center text-lg">{ICONS.coinspot}</div>
                   <div>
-                    <p className="text-sm text-white font-medium">{svc.label}</p>
-                    <p className="text-xs text-slate-500">{svc.description}</p>
+                    <p className="text-sm text-white font-medium">CoinSpot</p>
+                    <p className="text-xs text-slate-500">Crypto portfolio</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  {svc.connected ? (
-                    <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                      <Wifi className="w-3 h-3" /> Connected
-                    </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {conns.coinspot.connected ? (
+                    <>
+                      <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                        <Wifi className="w-3 h-3" /> Connected
+                      </span>
+                      <button onClick={() => handleDisconnect("coinspot")} disabled={disconnecting === "coinspot"}
+                        className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1">
+                        {disconnecting === "coinspot" ? "…" : "Disconnect"}
+                      </button>
+                    </>
                   ) : (
-                    <a href={SETUP_LINKS[key]} target="_blank" rel="noopener noreferrer"
+                    <button onClick={() => setOpen(open === "coinspot" ? null : "coinspot")}
                       className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-[#1e2d4a] hover:bg-[#263656] border border-[#1e2d4a] px-2.5 py-1 rounded-full transition-colors">
-                      <WifiOff className="w-3 h-3" /> Set up →
-                    </a>
+                      <WifiOff className="w-3 h-3" /> Connect
+                    </button>
                   )}
                 </div>
               </div>
-            ))}
+              {open === "coinspot" && !conns.coinspot.connected && (
+                <CoinSpotForm onSaved={() => { setOpen(null); reload(); }} />
+              )}
+            </div>
+
+            {/* Sharesight */}
+            <div className="rounded-xl bg-[#0a1222] border border-[#1e2d4a] p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0f1a2e] border border-[#1e2d4a] flex items-center justify-center text-lg">{ICONS.sharesight}</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">Sharesight</p>
+                    <p className="text-xs text-slate-500">Share portfolio</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {conns.sharesight.connected ? (
+                    <>
+                      <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                        <Wifi className="w-3 h-3" /> Connected
+                      </span>
+                      <button onClick={() => handleDisconnect("sharesight")} disabled={disconnecting === "sharesight"}
+                        className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1">
+                        {disconnecting === "sharesight" ? "…" : "Disconnect"}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setOpen(open === "sharesight" ? null : "sharesight")}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-[#1e2d4a] hover:bg-[#263656] border border-[#1e2d4a] px-2.5 py-1 rounded-full transition-colors">
+                      <WifiOff className="w-3 h-3" /> Connect
+                    </button>
+                  )}
+                </div>
+              </div>
+              {open === "sharesight" && !conns.sharesight.connected && (
+                <SharesightForm onSaved={() => { setOpen(null); reload(); }} />
+              )}
+            </div>
+
+            {/* Basiq */}
+            <div className="rounded-xl bg-[#0a1222] border border-[#1e2d4a] p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0f1a2e] border border-[#1e2d4a] flex items-center justify-center text-lg">{ICONS.basiq}</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">Bank Accounts</p>
+                    <p className="text-xs text-slate-500">Australian banks via Open Banking</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {conns.basiq.connected ? (
+                    <>
+                      <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                        <Wifi className="w-3 h-3" /> Connected
+                      </span>
+                      <button onClick={handleConnectBanks}
+                        className="text-xs text-slate-400 hover:text-white transition-colors px-2 py-1">
+                        Reconnect
+                      </button>
+                      <button onClick={() => handleDisconnect("basiq")} disabled={disconnecting === "basiq"}
+                        className="text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1">
+                        {disconnecting === "basiq" ? "…" : "Disconnect"}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={handleConnectBanks}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-[#1e2d4a] hover:bg-[#263656] border border-[#1e2d4a] px-2.5 py-1 rounded-full transition-colors">
+                      <WifiOff className="w-3 h-3" /> Connect Banks
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Email — read-only, app-level config */}
+            <div className="rounded-xl bg-[#0a1222] border border-[#1e2d4a] p-4 opacity-70">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0f1a2e] border border-[#1e2d4a] flex items-center justify-center text-lg">{ICONS.email}</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">Email</p>
+                    <p className="text-xs text-slate-500">Verification emails — configured by the app owner</p>
+                  </div>
+                </div>
+                {conns.email.connected ? (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                    <Wifi className="w-3 h-3" /> Active
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-500">Not configured</span>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="rounded-2xl border border-[#1e2d4a] bg-[#0f1a2e] p-5 space-y-2">
-        <p className="text-xs text-slate-500 uppercase tracking-wide">How to connect a service</p>
-        <ol className="space-y-1.5 text-xs text-slate-400 list-decimal list-inside">
-          <li>Get an API key from the service's developer portal</li>
-          <li>Open <code className="text-emerald-400">.env.local</code> in the project root</li>
-          <li>Paste the key next to the matching variable (e.g. <code className="text-emerald-400">COINSPOT_KEY=</code>)</li>
-          <li>Restart the dev server — the service will show as Connected</li>
-        </ol>
+      <div className="rounded-2xl border border-[#1e2d4a] bg-[#0f1a2e] p-5">
+        <p className="text-xs text-slate-400 font-medium mb-2">Security note</p>
+        <p className="text-xs text-slate-500">
+          Your API keys are encrypted with AES-256-GCM before being stored. Nobody else — including the app owner — can read your credentials.
+          Use <strong className="text-slate-300">read-only</strong> API keys wherever the service offers them.
+        </p>
       </div>
     </div>
   );
