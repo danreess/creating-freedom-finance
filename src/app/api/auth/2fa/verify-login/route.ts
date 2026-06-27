@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyTempToken, signSession } from "@/lib/session";
-import { getUserById, updateBackupCodes } from "@/lib/users";
+import { getUserById, updateBackupCodes, recordLoginEvent } from "@/lib/users";
 import { verifyTotpCode, consumeBackupCode } from "@/lib/totp";
+import { sendLoginAlertEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   let tempToken: string, code: string;
@@ -28,10 +29,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "2FA not configured" }, { status: 400 });
   }
 
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+
   const normalizedCode = code.replace(/\s/g, "");
 
   // Try TOTP first
   if (verifyTotpCode(user.totpSecret, normalizedCode)) {
+    Promise.all([
+      recordLoginEvent(user.id, ip),
+      sendLoginAlertEmail(user.email, user.name, ip, new Date().toUTCString()).catch(() => {}),
+    ]).catch(() => {});
     const token = await signSession(user.id, user.sessionVersion);
     const res = NextResponse.json({ ok: true, name: user.name });
     res.cookies.set("__session", token, {
@@ -49,6 +59,10 @@ export async function POST(req: NextRequest) {
   const { valid, remaining } = await consumeBackupCode(normalizedCode, hashed);
   if (valid) {
     await updateBackupCodes(user.id, remaining);
+    Promise.all([
+      recordLoginEvent(user.id, ip),
+      sendLoginAlertEmail(user.email, user.name, ip, new Date().toUTCString()).catch(() => {}),
+    ]).catch(() => {});
     const token = await signSession(user.id, user.sessionVersion);
     const res = NextResponse.json({
       ok: true,

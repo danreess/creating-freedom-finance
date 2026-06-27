@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getUserByEmail, verifyPassword, isAccountLocked,
-  recordFailedLogin, clearFailedLogins,
+  recordFailedLogin, clearFailedLogins, recordLoginEvent,
 } from "@/lib/users";
 import { signSession, signTempToken } from "@/lib/session";
+import { sendLoginAlertEmail } from "@/lib/email";
 
 // IP-based rate limiter: 10 attempts per IP per 15 minutes
 const ipAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -80,6 +81,12 @@ export async function POST(req: NextRequest) {
     const tempToken = await signTempToken(user.id);
     return NextResponse.json({ requires2FA: true, tempToken });
   }
+
+  // Record login and send alert (fire-and-forget — don't block the response)
+  Promise.all([
+    recordLoginEvent(user.id, ip),
+    sendLoginAlertEmail(user.email, user.name, ip, new Date().toUTCString()).catch(() => {}),
+  ]).catch(() => {});
 
   const token = await signSession(user.id, user.sessionVersion);
   const res = NextResponse.json({ ok: true, name: user.name });

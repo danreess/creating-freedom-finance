@@ -392,6 +392,8 @@ function TwoFADisableModal({ onClose, onDisabled }: { onClose: () => void; onDis
 }
 
 // ── Security tab ───────────────────────────────────────────────────────────────
+interface LoginEvent { id: string; ip: string; createdAt: string }
+
 function SecurityTab({ user, onTotpChange }: { user: UserProfile; onTotpChange: (enabled: boolean) => void }) {
   const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
   const [showPw, setShowPw] = useState(false);
@@ -400,6 +402,11 @@ function SecurityTab({ user, onTotpChange }: { user: UserProfile; onTotpChange: 
   const [pwLoading, setPwLoading] = useState(false);
   const [showSetup2FA, setShowSetup2FA] = useState(false);
   const [showDisable2FA, setShowDisable2FA] = useState(false);
+  const [loginHistory, setLoginHistory] = useState<LoginEvent[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/login-history").then(r => r.json()).then(setLoginHistory).catch(() => {});
+  }, []);
 
   const newStrength = passwordStrength(pwForm.next);
   const passwordsMatch = pwForm.confirm ? pwForm.next === pwForm.confirm : null;
@@ -568,6 +575,34 @@ function SecurityTab({ user, onTotpChange }: { user: UserProfile; onTotpChange: 
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Login activity */}
+      <div className="rounded-2xl border border-[#1e2d4a] bg-[#0f1a2e] p-6 space-y-3">
+        <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+          <Shield className="w-4 h-4 text-slate-400" /> Recent Login Activity
+        </h3>
+        {!loginHistory ? (
+          <div className="flex items-center gap-2 text-slate-500 text-sm py-2">
+            <div className="w-3 h-3 border border-slate-600 border-t-emerald-500 rounded-full animate-spin" />
+            Loading…
+          </div>
+        ) : loginHistory.length === 0 ? (
+          <p className="text-xs text-slate-500">No login history yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {loginHistory.map((e, i) => (
+              <div key={e.id} className="flex items-center justify-between text-xs py-2 border-b border-[#1e2d4a] last:border-0">
+                <div className="flex items-center gap-2">
+                  {i === 0 && <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[10px]">Current</span>}
+                  <span className="text-slate-300 font-mono">{e.ip}</span>
+                </div>
+                <span className="text-slate-500">{new Date(e.createdAt).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-slate-600">You receive an email alert for every sign-in. If you see activity you don&apos;t recognise, change your password immediately.</p>
       </div>
 
       {showSetup2FA && (

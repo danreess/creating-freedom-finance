@@ -209,3 +209,46 @@ export async function updateBackupCodes(userId: string, hashedCodes: string[]): 
   const codes = JSON.stringify(hashedCodes);
   await db()`UPDATE users SET backup_codes = ${codes} WHERE id = ${userId}`;
 }
+
+// ── Login activity log ─────────────────────────────────────────────────────────
+
+export interface LoginEvent {
+  id: string;
+  ip: string;
+  createdAt: string;
+}
+
+export async function recordLoginEvent(userId: string, ip: string): Promise<void> {
+  const { randomBytes } = await import("crypto");
+  const id = randomBytes(8).toString("hex");
+  const createdAt = new Date().toISOString();
+  await db()`
+    INSERT INTO login_events (id, user_id, ip, created_at)
+    VALUES (${id}, ${userId}, ${ip}, ${createdAt})
+  `;
+  // Keep only the 20 most recent events per user
+  await db()`
+    DELETE FROM login_events
+    WHERE user_id = ${userId}
+    AND id NOT IN (
+      SELECT id FROM login_events
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 20
+    )
+  `;
+}
+
+export async function getLoginEvents(userId: string): Promise<LoginEvent[]> {
+  const rows = await db()`
+    SELECT id, ip, created_at FROM login_events
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT 10
+  `;
+  return rows.map(r => ({
+    id: r.id as string,
+    ip: r.ip as string,
+    createdAt: r.created_at as string,
+  }));
+}
