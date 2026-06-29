@@ -644,12 +644,15 @@ function CoinSpotForm({ onSaved }: { onSaved: () => void }) {
 
   return (
     <form onSubmit={handleSave} className="mt-3 space-y-3 border-t border-[#1e2d4a] pt-3">
-      <p className="text-xs text-slate-400">
-        Get your API key from{" "}
-        <a href="https://www.coinspot.com.au/api" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
-          coinspot.com.au/api
-        </a>{" "}— use a <strong>read-only</strong> key.
-      </p>
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 flex gap-2">
+        <span className="text-amber-400 text-sm shrink-0">⚠️</span>
+        <p className="text-xs text-amber-300 leading-relaxed">
+          <strong>Use a read-only API key.</strong> In CoinSpot, when creating a key, disable Trade and Withdraw permissions. A read-only key means even if it were stolen, no funds can be moved.{" "}
+          <a href="https://www.coinspot.com.au/api" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-200">
+            coinspot.com.au/api →
+          </a>
+        </p>
+      </div>
       <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" required
         className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
       <input value={secret} onChange={e => setSecret(e.target.value)} placeholder="Secret" required type="password"
@@ -686,12 +689,15 @@ function SharesightForm({ onSaved }: { onSaved: () => void }) {
 
   return (
     <form onSubmit={handleSave} className="mt-3 space-y-3 border-t border-[#1e2d4a] pt-3">
-      <p className="text-xs text-slate-400">
-        Register an OAuth app at{" "}
-        <a href="https://portfolio.sharesight.com/api_partners/new" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
-          Sharesight API Partners
-        </a>{" "}to get your client ID, secret, and refresh token.
-      </p>
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 flex gap-2">
+        <span className="text-amber-400 text-sm shrink-0">⚠️</span>
+        <p className="text-xs text-amber-300 leading-relaxed">
+          <strong>Use read-only OAuth scopes.</strong> When registering your API app, only request read access — not write or trade permissions. This limits what an attacker could do if credentials were ever exposed.{" "}
+          <a href="https://portfolio.sharesight.com/api_partners/new" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-200">
+            Sharesight API Partners →
+          </a>
+        </p>
+      </div>
       <input value={clientId} onChange={e => setClientId(e.target.value)} placeholder="Client ID" required
         className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
       <input value={clientSecret} onChange={e => setClientSecret(e.target.value)} placeholder="Client Secret" required type="password"
