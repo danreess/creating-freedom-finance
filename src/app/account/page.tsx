@@ -627,6 +627,7 @@ function CoinSpotForm({ onSaved }: { onSaved: () => void }) {
   const [secret, setSecret] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showGuide, setShowGuide] = useState(true);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -642,27 +643,53 @@ function CoinSpotForm({ onSaved }: { onSaved: () => void }) {
     onSaved();
   }
 
+  const steps = [
+    { n: 1, text: <>Log in to <a href="https://www.coinspot.com.au" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">coinspot.com.au</a></> },
+    { n: 2, text: <>Click your name in the top right → <strong className="text-slate-200">My Account</strong></> },
+    { n: 3, text: <><strong className="text-slate-200">API</strong> in the left sidebar</> },
+    { n: 4, text: <>Click <strong className="text-slate-200">Add API Key</strong></> },
+    { n: 5, text: <>Give it a name (e.g. <em>Creating Freedom</em>)</> },
+    { n: 6, text: <><strong className="text-amber-300">Important:</strong> under Permissions, enable <strong className="text-slate-200">Read Only</strong> only — leave Trade and Withdraw <strong className="text-red-400">OFF</strong></> },
+    { n: 7, text: <>Click <strong className="text-slate-200">Add Key</strong> — copy both the API Key and Secret shown (the secret is only shown once)</> },
+    { n: 8, text: <>Paste both below and click Save &amp; Connect</> },
+  ];
+
   return (
-    <form onSubmit={handleSave} className="mt-3 space-y-3 border-t border-[#1e2d4a] pt-3">
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 flex gap-2">
-        <span className="text-amber-400 text-sm shrink-0">⚠️</span>
-        <p className="text-xs text-amber-300 leading-relaxed">
-          <strong>Use a read-only API key.</strong> In CoinSpot, when creating a key, disable Trade and Withdraw permissions. A read-only key means even if it were stolen, no funds can be moved.{" "}
-          <a href="https://www.coinspot.com.au/api" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-200">
-            coinspot.com.au/api →
-          </a>
-        </p>
-      </div>
-      <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" required
-        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
-      <input value={secret} onChange={e => setSecret(e.target.value)} placeholder="Secret" required type="password"
-        className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      <button type="submit" disabled={saving}
-        className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors">
-        {saving ? "Saving…" : "Save & Connect"}
+    <div className="mt-3 border-t border-[#1e2d4a] pt-3 space-y-3">
+      {/* Step-by-step guide */}
+      <button type="button" onClick={() => setShowGuide(g => !g)}
+        className="w-full flex items-center justify-between text-xs text-slate-400 hover:text-slate-200 transition-colors">
+        <span className="font-medium">How to create a CoinSpot API key</span>
+        <span>{showGuide ? "▲ Hide" : "▼ Show"}</span>
       </button>
-    </form>
+      {showGuide && (
+        <ol className="space-y-2">
+          {steps.map(s => (
+            <li key={s.n} className="flex gap-3 items-start">
+              <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold flex items-center justify-center mt-0.5">
+                {s.n}
+              </span>
+              <span className="text-xs text-slate-400 leading-relaxed">{s.text}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 flex gap-2">
+        <span className="text-amber-400 text-sm shrink-0">⚠️</span>
+        <p className="text-xs text-amber-300">A <strong>Read Only</strong> key means even if it were ever exposed, nobody can trade or withdraw your funds.</p>
+      </div>
+      <form onSubmit={handleSave} className="space-y-3">
+        <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" required
+          className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+        <input value={secret} onChange={e => setSecret(e.target.value)} placeholder="Secret" required type="password"
+          className="w-full bg-[#0a1222] border border-[#1e2d4a] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        <button type="submit" disabled={saving}
+          className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-medium py-2 rounded-lg transition-colors">
+          {saving ? "Saving…" : "Save & Connect"}
+        </button>
+      </form>
+    </div>
   );
 }
 
